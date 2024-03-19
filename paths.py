@@ -1,0 +1,6 @@
+TFM_PATH = r""
+GIT_PATH = r""
+
+RAW_DATABASE_PATH = r""
+DATABASE_PATH = r""
+MASKS_PATH = r""
