@@ -1,2 +1,3 @@
 **paths.py
 /database/**
+/__pycache__/**
