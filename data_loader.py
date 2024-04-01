@@ -84,7 +84,7 @@ def get_dataset(
                 end_idx = total_images
 
             image_batch = np.zeros(shape=((end_idx - start_idx,) + (512, 512, 1)))
-            label_batch = np.zeros(shape=((end_idx - start_idx, 2)))
+            label_batch = np.zeros(shape=((end_idx - start_idx, 7)))
             
             for idx, filename in enumerate(filenames[start_idx:end_idx]):
                 image = cv2.imread(os.path.join(database_path, filename), 0)
@@ -96,18 +96,30 @@ def get_dataset(
                 # image_batch[idx] = (image / 127.5 - 1).astype(np.float32)
                 image_batch[idx] = preprocess(image)
 
-                label_batch[idx] = get_pathology_label(filename)
+                label_batch[idx] = get_pathology_label(filename, mode="classification")
+                # print(label_batch)
 
             yield (image_batch, label_batch)
 
         if not repeat:
             break
 
-# dataset = get_dataset(
-#     r"C:\Users\tonin\Desktop\Master\TFM\ABNORMAL_DATABASE",
-#     r"C:\Users\tonin\Desktop\Master\TFM\DATABASE\abnormal_detection_selection.csv", 
-#     fold_idx="1",
-#     batch_size=6, 
-#     mode="train",
-#     repeat=True
-# )
+
+if __name__ == "__main__":
+    DATABASE_PATH = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/PROCESSED_DATABASE"
+    TFM_PATH = r"/home/marc/ANTONIO_EXPERIMENTS/TFM"
+
+    ABNORMAL_CSV = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/abnormal_detection_selection.csv"
+    DISEASE_CSV = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/disease_classification_selection.csv"
+
+
+    dataset = get_dataset(
+        DATABASE_PATH,
+        DISEASE_CSV, 
+        fold_idx="1",
+        batch_size=6, 
+        mode="train",
+        repeat=True
+    )
+    
+    next(dataset)

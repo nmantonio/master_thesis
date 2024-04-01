@@ -8,13 +8,13 @@ from natsort import natsorted
 import cv2
 import numpy as np
 
-db_path = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/ABNORMAL_DATABASE"
+db_path = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/PROCESSED_DATABASE"
 
-model_path = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/model/abnormal_test_SGD_low.h5"
+model_path = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/Xception/Xception_SGD_0.0001_0.99_disease/model.h5"
 
-fold_idx = "4"
+fold_idx = "1"
 
-df = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/abnormal_detection_selection.csv"
+df = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/disease_classification_selection.csv"
 
 
 model = load_model(model_path)
@@ -32,13 +32,13 @@ for idx, filename in enumerate(natsorted(df["new_filename"])):
     image = np.expand_dims(image, axis=-1)
     
     pred = model.predict(image)
-    pred = pred[0][0]
+    pred = np.argmax(pred)
     
     val_df = val_df.append({"filename": filename, "prediction": pred}, ignore_index=True)
         
     if idx < 5:
         print(val_df)
     
-val_df.to_csv(r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/predictions.csv", index=False)
+val_df.to_csv(r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/Xception/Xception_SGD_0.0001_0.99_disease/predictions.csv", index=False)
 
 
