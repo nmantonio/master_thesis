@@ -1,4 +1,4 @@
-original_filename,database,pathology,detection
+original_filename,database,classification,detection
 CRIS13636147.png,DS1,covid,abnormal
 CRIS13636620.png,DS1,covid,abnormal
 CRIS13637144.png,DS1,covid,abnormal
