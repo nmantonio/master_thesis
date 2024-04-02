@@ -4,3 +4,6 @@ GIT_PATH = r""
 RAW_DATABASE_PATH = r""
 DATABASE_PATH = r""
 MASKS_PATH = r""
+
+ABNORMAL_CSV = r""
+DISEASE_CSV = r""
