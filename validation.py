@@ -8,13 +8,13 @@ from natsort import natsorted
 import cv2
 import numpy as np
 
-db_path = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/PROCESSED_DATABASE"
+db_path = r"/home/anadal/Experiments/TFM/PROCESSED_DATABASE"
 
-model_path = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/Xception/Xception_SGD_0.0001_0.99_disease/model.h5"
+model_path = r"/home/anadal/Experiments/TFM/master_thesis/MobileNetV2/Mobilenet_adam_0.0001_abnormal/model.h5"
 
 fold_idx = "1"
 
-df = r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/disease_classification_selection.csv"
+df = r"/home/anadal/Experiments/TFM/master_thesis/abnormal_detection_selection.csv"
 
 
 model = load_model(model_path)
@@ -34,11 +34,13 @@ for idx, filename in enumerate(natsorted(df["new_filename"])):
     pred = model.predict(image)
     pred = np.argmax(pred)
     
-    val_df = val_df.append({"filename": filename, "prediction": pred}, ignore_index=True)
+    new_row = {"filename": filename, "prediction": pred} 
+    val_df = pd.concat([val_df, pd.DataFrame([new_row])], ignore_index=True)
+    
         
     if idx < 5:
         print(val_df)
     
-val_df.to_csv(r"/home/marc/ANTONIO_EXPERIMENTS/TFM/master_thesis/Xception/Xception_SGD_0.0001_0.99_disease/predictions.csv", index=False)
+val_df.to_csv(r"/home/anadal/Experiments/TFM/master_thesis/MobileNetV2/Mobilenet_adam_0.0001_abnormal/predictions.csv", index=False)
 
 
