@@ -1,7 +1,7 @@
 """
-python train.py --model_name --fold_idx --task --save_path
+python train.py --model_name mobilenet --fold_idx 1 --task detection --save_path /home/anadal/Experiments/TFM/master_thesis/mobilenet_train --epochs 15
 
-python train.py --model_name --fold_idx --task --save_path --trainable_core --batch_size --augmentation_prob
+python train.py --model_name --fold_idx --task --save_path --trainable_core --batch_size --augmentation_prob --epochs
 """
 
 
@@ -22,6 +22,7 @@ from keras.optimizers import Adam, SGD
 from keras.callbacks import EarlyStopping, CSVLogger
 
 from data_loader import get_dataset
+from utils import compute_graphics
 
 parser = argparse
 
@@ -32,6 +33,7 @@ parser.add_argument('--fold_idx', type=str, required=True, help='Fold index')
 parser.add_argument('--task', type=str, required=True, help='Type of task', choices=['detection', 'classification'])
 parser.add_argument('--save_path', type=str, required=True, help='Path to save the trained model')
 parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (default: True)')
+parser.add_argument('--epochs', type=int, default=300, help='Epochs for training (default: 300)')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training (default: 32)')
 parser.add_argument('--augmentation_prob', type=float, default=0, help='Probability of augmentation (default: 0)')
 
@@ -45,8 +47,9 @@ batch_size = args.batch_size
 fold_idx = args.fold_idx
 task = args.task
 augmentation_prob = args.augmentation_prob
+epochs = args.epochs
 
-save_path = args.save_path
+save_path = r"{}".format(args.save_path)
 os.makedirs(save_path)
 
 # Preprocessing
@@ -63,6 +66,7 @@ else:
     raise ValueError(f"{task} not available! Try 'detection' or 'classification'.")
 
 FOLDS = ["1", "2", "3", "4", "5"]
+# FOLDS = ["1", "2"]
 FOLDS.remove(str(fold_idx))
 
 steps_per_epoch = np.ceil(df[df["split"].isin(FOLDS)].shape[0] / batch_size)
@@ -102,20 +106,26 @@ predictions = Dense(n_classes, activation="softmax")(x)
 
 # Create the fine-tuned model
 model = Model(inputs=base_model.input, outputs=predictions, name=model_name)
-model.summary(line_length=200)
+# model.summary(line_length=175)
 
 model.compile(optimizer=Adam(learning_rate=0.00001), loss='categorical_crossentropy', metrics=['accuracy'])
 
 model.fit(
     train_dataset,
-    epochs=1,
+    epochs=epochs,
     steps_per_epoch=steps_per_epoch,
     validation_data=val_dataset,
     validation_steps=val_steps_per_epoch,
     callbacks = [
         EarlyStopping(patience=30, restore_best_weights=True),
         CSVLogger(os.path.join(save_path, "train_log.csv"))
-    ]
+    ],
+    verbose=2
 )
 
 model.save(os.path.join(save_path, "model.keras"))
+
+compute_graphics(
+    train_log = os.path.join(save_path, "train_log.csv"), 
+    save_path = save_path
+)
