@@ -22,16 +22,14 @@ def get_dataset(
     task = task.lower()
     if task == "detection":
         encoder = load_encoder(DETECTION_ENCODER)
-        csv_path = DETECTION_CSV
+        df = pd.read_csv(DETECTION_CSV)
     elif task == "classification":
         encoder = load_encoder(CLASSIFICATION_ENCODER)
-        csv_path = CLASSIFICATION_CSV
+        df = pd.read_csv(CLASSIFICATION_CSV)
     else: 
         raise ValueError(f"Task not supported. Try 'detection' or 'classification'.")
     
     FOLDS = ["1", "2", "3", "4", "5"]
-    
-    df = pd.read_csv(csv_path)
     
     if mode == "train":
         FOLDS.remove(fold_idx)
