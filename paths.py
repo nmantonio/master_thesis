@@ -2,6 +2,7 @@ import os
 
 TFM_PATH = r"/home/anadal/Experiments/TFM"
 GIT_PATH = os.path.join(TFM_PATH, "master_thesis")
+TRAIN_PATH = os.path.join(TFM_PATH, "trains")
 
 RAW_DATABASE_PATH = r""
 DATABASE_PATH = os.path.join(TFM_PATH, "PROCESSED_DATABASE")
