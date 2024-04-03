@@ -13,3 +13,7 @@ CLASSIFICATION_CSV = os.path.join(GIT_PATH, "disease_classification_selection.cs
 ENCODERS_PATH = os.path.join(GIT_PATH, "encoders")
 DETECTION_ENCODER = os.path.join(ENCODERS_PATH, "detection_encoder")
 CLASSIFICATION_ENCODER = os.path.join(ENCODERS_PATH, "classification_encoder")
+
+AUGMENTED_IMAGES_CHECK = os.path.join(TFM_PATH, "AUGMENTED_IMAGES")
+IMAGES_CHECK = os.path.join(TFM_PATH, "TEMP_IMAGES")
+os.makedirs(IMAGES_CHECK, exist_ok=True)
