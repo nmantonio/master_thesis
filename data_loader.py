@@ -3,42 +3,51 @@ import os
 import numpy as np
 import pandas as pd
 from utils import load_encoder
+from paths import *
 
 def preprocess(image):
     return (image.astype(np.float32) / 127.5) - 1.0
 
 def get_dataset(
     database_path,
-    csv_path, 
     fold_idx, 
     batch_size,
-    mode, 
-    repeat,
-    encoder_path,
+    mode, # train or val/test, 
+    task, # detection or classification
+    repeat=True,
+    preprocessing_func = preprocess,
     augmentation=0.25 # augment prob
 ):
-    label_mode = "pathology" if "classification" in csv_path else "detection"
-    print(f"Selected label mode: {label_mode}")
-    encoder = load_encoder(encoder_path)
+    fold_idx = str(fold_idx)
+    task = task.lower()
+    if task == "detection":
+        encoder = load_encoder(DETECTION_ENCODER)
+        csv_path = DETECTION_CSV
+    elif task == "classification":
+        encoder = load_encoder(CLASSIFICATION_ENCODER)
+        csv_path = CLASSIFICATION_CSV
+    else: 
+        raise ValueError(f"Task not supported. Try 'detection' or 'classification'.")
     
     FOLDS = ["1", "2", "3", "4", "5"]
+    
     df = pd.read_csv(csv_path)
+    
     if mode == "train":
         FOLDS.remove(fold_idx)
         df = df[df["split"].isin(FOLDS)]
-        
-        print("Training folds: ", df.split.unique())
+        print("\nTraining folds: ", df.split.unique())
                 
-    elif mode == "test":
+    elif (mode == "val") or (mode == "test"):
         df = df[df["split"] == fold_idx]
-        print("Validation fold: ", df.split.unique())
+        print("\nValidation fold: ", df.split.unique())
         
     else:
         raise ValueError(f"Invalid mode {mode}. Only available 'train' or 'test'.")
     
-    data = list(zip(df["new_filename"], df[label_mode]))
+    data = list(zip(df["new_filename"], df[task]))
     total_images = len(data)
-    print(f"Total images per epoch ({mode}): {total_images}")   
+    print(f"\nTotal images per epoch ({mode}): {total_images}")   
      
     aug_idx = 0
     while True:
@@ -49,17 +58,14 @@ def get_dataset(
             if end_idx > total_images:
                 end_idx = total_images
 
-            image_batch = np.zeros(shape=((end_idx - start_idx,) + (512, 512, 3)))
+            image_batch = np.zeros(shape=((end_idx - start_idx,) + (512, 512, 1)))
 
             label_batch = np.zeros(shape=((end_idx - start_idx, len(encoder.get_feature_names_out()))))
-            print(label_batch.shape)
-
-
             
             for idx, (filename, disease) in enumerate(data[start_idx:end_idx]):
-                image = cv2.imread(os.path.join(database_path, filename))
+                image = cv2.imread(os.path.join(database_path, filename), 0)
                 
-                if augmentation > 0: 
+                if (augmentation > 0) and (mode == "train"): 
                     aug = ""
                     if np.random.rand() < augmentation:
                         gamma = np.random.uniform(0.8, 1.2)
@@ -87,20 +93,17 @@ def get_dataset(
                         
                         aug += "rot"
                         
-                    if np.random.rand() < 0.1:    
-                        cv2.imwrite(os.path.join(r"/home/anadal/Experiments/TFM/AUGMENTATED_IMAGES", f"{aug}_{aug_idx}.png"), image)
+                    if np.random.rand() < 0.005:    
+                        cv2.imwrite(os.path.join(AUGMENTED_IMAGES_CHECK, f"{aug}_{aug_idx}.png"), image)
                     aug_idx += 1
                 
-                # image = np.expand_dims(image, axis=-1)
+                image = np.expand_dims(image, axis=-1)
+                # cv2.imwrite(os.path.join(IMAGES_CHECK, filename), image)
 
-                # cv2.imshow(filename, image)
-                # cv2.waitKey(0)
-                # cv2.destroyAllWindows()
-                # image_batch[idx] = (image / 127.5 - 1).astype(np.float32)
-                image_batch[idx] = preprocess(image)
+                image_batch[idx] = preprocessing_func(image)
 
-                label_batch[idx] = encoder.transform(pd.DataFrame({"pathology": [disease]})).toarray()
-                print(label_batch)
+                label_batch[idx] = encoder.transform(pd.DataFrame({task: [disease]})).toarray()
+                # print(label_batch[idx])
 
             yield (image_batch, label_batch)
 
@@ -108,25 +111,14 @@ def get_dataset(
             break
 
 
-if __name__ == "__main__":
-    TFM_PATH = r"/home/anadal/Experiments/TFM"
+# if __name__ == "__main__":
 
-    DATABASE_PATH = r"/home/anadal/Experiments/TFM/PROCESSED_DATABASE"
-
-    DETECTION_CSV = r"/home/anadal/Experiments/TFM/master_thesis/abnormal_detection_selection.csv"
-    CLASSIFICATION_CSV = r"/home/anadal/Experiments/TFM/master_thesis/disease_classification_selection.csv"
+#     dataset = get_dataset(
+#         database_path = DATABASE_PATH,
+#         fold_idx = 1, 
+#         batch_size = 8,
+#         mode = "train", # train or val/test, 
+#         task = "detection", # detection or classification
+#     )
     
-    DETECTION_ENCODER = r"/home/anadal/Experiments/TFM/master_thesis/detection_encoder"
-    CLASSIFICATION_ENCODER = r"/home/anadal/Experiments/TFM/master_thesis/classification_encoder"
-
-    dataset = get_dataset(
-        DATABASE_PATH,
-        CLASSIFICATION_CSV, 
-        fold_idx="1",
-        batch_size=6, 
-        mode="train",
-        repeat=True, 
-        encoder_path = CLASSIFICATION_ENCODER
-    )
-    
-    next(dataset)
+#     next(dataset)
