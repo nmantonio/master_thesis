@@ -36,7 +36,7 @@ parser.add_argument('--save_path', type=str, required=True, help='Path to save t
 parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (only if pretrained=True) (default: True)')
 parser.add_argument('--pretrained', type=bool, default=True, help='Whether to use pretrained weights (ImageNet) (default: True)')
 parser.add_argument('--epochs', type=int, default=300, help='Epochs for training (default: 300)')
-parser.add_argument('--lr', type=int, default=0.001, help='Learning rate for training (default: 0.001)')
+parser.add_argument('--lr', type=float, default=0.001, help='Learning rate for training (default: 0.001)')
 parser.add_argument('--patience', type=int, default=10, help='Patience to perform earlystopping (default: 10)')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training (default: 32)')
 parser.add_argument('--augmentation_prob', type=float, default=0, help='Probability of augmentation (default: 0)')
