@@ -72,11 +72,11 @@ def get_dataset(
                         
                         aug += "gamma"
                         
-                    # if np.random.rand() < augmentation:
-                    #     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-                    #     image = clahe.apply(image)
+                    if np.random.rand() < augmentation:
+                        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+                        image = clahe.apply(image)
                         
-                        # aug += "clahe"
+                        aug += "clahe"
                         
                     if np.random.rand() < augmentation:
                         image = 255 - image

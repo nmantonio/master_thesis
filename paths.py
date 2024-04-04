@@ -6,7 +6,9 @@ TRAIN_PATH = os.path.join(TFM_PATH, "trains")
 
 RAW_DATABASE_PATH = r""
 DATABASE_PATH = os.path.join(TFM_PATH, "PROCESSED_DATABASE")
-MASKS_PATH = r""
+CROPPED_DATABASE_PATH = os.path.join(TFM_PATH, "CROPPED_DATABASE")
+RAW_MASKS_PATH = os.path.join(TFM_PATH, "MASKS")
+MASKS_PATH = os.path.join(TFM_PATH, "PROCESSED_MASKS")
 
 DETECTION_CSV = os.path.join(GIT_PATH, "abnormal_detection_selection.csv")
 CLASSIFICATION_CSV = os.path.join(GIT_PATH, "disease_classification_selection.csv")
