@@ -1,7 +1,7 @@
 """
-python train.py --model_name mobilenet --fold_idx 1 --task detection --save_path /home/anadal/Experiments/TFM/master_thesis/mobilenet_train --epochs 15
+python train.py --model_name mobilenet --fold_idx 1 --task detection --save_path /home/anadal/Experiments/TFM/master_thesis/test --epochs 15
 
-python train.py --model_name --fold_idx --task --save_path --trainable_core --batch_size --augmentation_prob --epochs
+python train.py --model_name --fold_idx --task --save_path --trainable_core --batch_size --augmentation_prob --epochs --patience --lr --database_path
 """
 
 
@@ -14,7 +14,7 @@ from paths import *
 import pandas as pd
 import numpy as np
 
-from models.utils import modify_model, get_preprocessing_func
+from models.utils import get_model, get_preprocessing_func
 from models.tops import *
 
 from keras.models import Model
@@ -23,6 +23,7 @@ from keras.callbacks import EarlyStopping, CSVLogger
 
 from data_loader import get_dataset
 from utils import compute_graphics
+import json
 
 parser = argparse
 
@@ -32,10 +33,15 @@ parser.add_argument('--model_name', type=str, default='xception', help='Name of 
 parser.add_argument('--fold_idx', type=str, required=True, help='Fold index')
 parser.add_argument('--task', type=str, required=True, help='Type of task', choices=['detection', 'classification'])
 parser.add_argument('--save_path', type=str, required=True, help='Path to save the trained model')
-parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (default: True)')
+parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (only if pretrained=True) (default: True)')
+parser.add_argument('--pretrained', type=bool, default=True, help='Whether to use pretrained weights (ImageNet) (default: True)')
 parser.add_argument('--epochs', type=int, default=300, help='Epochs for training (default: 300)')
+parser.add_argument('--lr', type=int, default=0.001, help='Learning rate for training (default: 0.001)')
+parser.add_argument('--patience', type=int, default=10, help='Patience to perform earlystopping (default: 10)')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training (default: 32)')
 parser.add_argument('--augmentation_prob', type=float, default=0, help='Probability of augmentation (default: 0)')
+parser.add_argument('--database_path', type=str, default=DATABASE_PATH, help='Database to be used (default: DATABASE_PATH)', choices=[DATABASE_PATH, CROPPED_DATABASE_PATH])
+parser.add_argument('--top_idx', type=int, default=1, help='Top index (see tops.py) (default=1)')
 
 
 args = parser.parse_args()
@@ -48,9 +54,17 @@ fold_idx = args.fold_idx
 task = args.task
 augmentation_prob = args.augmentation_prob
 epochs = args.epochs
+patience = args.patience
+database = args.database_path
+lr = args.lr
+pretrained = args.pretrained
+top_idx = args.top_idx
 
 save_path = r"{}".format(args.save_path)
-os.makedirs(save_path)
+os.makedirs(save_path, exist_ok=True)
+with open(os.path.join(save_path, "train_args.json"), "w") as json_file: 
+    json.dump(args.__dict__, json_file, indent=4)
+
 
 # Preprocessing
 preprocessing_func = get_preprocessing_func(name=model_name)
@@ -76,7 +90,7 @@ print("STEPS PER EPOCH: ", steps_per_epoch)
 print("VAL STEPS PER EPOCH: ", val_steps_per_epoch)
 
 train_dataset = get_dataset(
-    database_path=DATABASE_PATH,
+    database_path=database,
     fold_idx=fold_idx, 
     batch_size=batch_size,
     mode="train", # train or val/test, 
@@ -87,7 +101,7 @@ train_dataset = get_dataset(
 )
 
 val_dataset = get_dataset(
-    database_path=DATABASE_PATH,
+    database_path=database,
     fold_idx=fold_idx, 
     batch_size=batch_size,
     mode="val", # train or val/test, 
@@ -98,17 +112,17 @@ val_dataset = get_dataset(
 )
 
 # base_model = Xception(weights=None, include_top=False, input_shape=(512, 512, 1))
-base_model = modify_model(name="xception", trainable=trainable_core)
+base_model = get_model(name="xception", pretrained=pretrained, trainable=trainable_core)
 
 x = base_model.output
-x = get_top(top_idx=1)(x)
+x = get_top(top_idx=top_idx)(x)
 predictions = Dense(n_classes, activation="softmax")(x)
 
 # Create the fine-tuned model
 model = Model(inputs=base_model.input, outputs=predictions, name=model_name)
 # model.summary(line_length=175)
 
-model.compile(optimizer=Adam(learning_rate=0.00001), loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=Adam(learning_rate=lr), loss='categorical_crossentropy', metrics=['accuracy'])
 
 model.fit(
     train_dataset,
@@ -117,10 +131,10 @@ model.fit(
     validation_data=val_dataset,
     validation_steps=val_steps_per_epoch,
     callbacks = [
-        EarlyStopping(patience=30, restore_best_weights=True),
+        EarlyStopping(patience=patience, restore_best_weights=True),
         CSVLogger(os.path.join(save_path, "train_log.csv"))
     ],
-    verbose=2
+    verbose=1
 )
 
 model.save(os.path.join(save_path, "model.keras"))
