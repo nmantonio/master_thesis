@@ -1,17 +1,27 @@
 import numpy as np
 
 
-def modify_model(name, trainable=True):
+def get_model(name, pretrained=True, trainable=True):
     if name == "xception": 
-        from models.xception import modify_Xception as model
+        if pretrained: 
+            from models.xception import modify_Xception
+            model = modify_Xception(trainable=trainable)
+        else: 
+            from keras.applications import Xception
+            model = Xception(include_top=False, weights="None", input_shape=(512, 512, 1))
 
     elif name == "mobilenet": 
-        from models.mobilenet import modify_MobileNet as model
+        if pretrained: 
+            from models.mobilenet import modify_MobileNet
+            model = modify_MobileNet(trainable=trainable)
+        else: 
+            from keras.applications import MobileNetV3Small
+            model = MobileNetV3Small(include_top=False, weights="None", input_shape=(512, 512, 1), include_preprocessing=False)
         
     else:
         raise NotImplementedError(f"'{name}' model name not implemented!")
     
-    return model(trainable=trainable)
+    return model
 
 def get_preprocessing_func(name):
     if name == "xception":
