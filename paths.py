@@ -20,3 +20,6 @@ CLASSIFICATION_ENCODER = os.path.join(ENCODERS_PATH, "classification_encoder")
 AUGMENTED_IMAGES_CHECK = os.path.join(TFM_PATH, "AUGMENTED_IMAGES")
 IMAGES_CHECK = os.path.join(TFM_PATH, "TEMP_IMAGES")
 os.makedirs(IMAGES_CHECK, exist_ok=True)
+
+TRAIN_SHEET = os.path.join(GIT_PATH, "train_sheet.xlsx")
+RESULTS_SHEET = os.path.join(GIT_PATH, "results_sheet.xlsx")
