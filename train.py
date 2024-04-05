@@ -20,6 +20,8 @@ from models.tops import *
 from keras.models import Model
 from keras.optimizers import Adam, SGD
 from keras.callbacks import EarlyStopping, CSVLogger
+from keras.losses import CategoricalFocalCrossentropy
+from utils import compute_loss_weights  
 
 from data_loader import get_dataset
 from utils import compute_graphics
@@ -35,13 +37,16 @@ parser.add_argument('--task', type=str, required=True, help='Type of task', choi
 parser.add_argument('--save_path', type=str, required=True, help='Path to save the trained model')
 parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (only if pretrained=True) (default: True)')
 parser.add_argument('--pretrained', type=bool, default=True, help='Whether to use pretrained weights (ImageNet) (default: True)')
+parser.add_argument('--optimizer', type=str, default="adam", help='Optimizer to be used during training (default: "adam")', choices=["adam", "sgd"])
 parser.add_argument('--epochs', type=int, default=300, help='Epochs for training (default: 300)')
 parser.add_argument('--lr', type=float, default=0.001, help='Learning rate for training (default: 0.001)')
 parser.add_argument('--patience', type=int, default=10, help='Patience to perform earlystopping (default: 10)')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training (default: 32)')
 parser.add_argument('--augmentation_prob', type=float, default=0, help='Probability of augmentation (default: 0)')
-parser.add_argument('--database_path', type=str, default=DATABASE_PATH, help='Database to be used (default: DATABASE_PATH)', choices=[DATABASE_PATH, CROPPED_DATABASE_PATH])
+parser.add_argument('--database', type=str, default="noncropped", help='Database to be used (default: "noncropped")', choices=["cropped", "noncropped"])
 parser.add_argument('--top_idx', type=int, default=1, help='Top index (see tops.py) (default=1)')
+parser.add_argument('--loss', type=str, default="categorical_crossentropy", help='Loss function to be used (default: categorical_crossentropy)', choices=["categorical_crossentropy", "categorical_focal_crossentropy"])
+
 
 
 args = parser.parse_args()
@@ -55,10 +60,17 @@ task = args.task
 augmentation_prob = args.augmentation_prob
 epochs = args.epochs
 patience = args.patience
-database = args.database_path
 lr = args.lr
 pretrained = args.pretrained
 top_idx = args.top_idx
+loss = args.loss
+optimizer = args.optimizer
+
+if args.database == "cropped":
+    database = CROPPED_DATABASE_PATH
+else: # noncropped
+    database = DATABASE_PATH
+
 
 save_path = r"{}".format(args.save_path)
 os.makedirs(save_path, exist_ok=True)
@@ -122,7 +134,17 @@ predictions = Dense(n_classes, activation="softmax")(x)
 model = Model(inputs=base_model.input, outputs=predictions, name=model_name)
 # model.summary(line_length=175)
 
-model.compile(optimizer=Adam(learning_rate=lr), loss='categorical_crossentropy', metrics=['accuracy'])
+if loss == "categorical_focal_crossentropy":
+    weights = compute_loss_weights(task, df) 
+    loss = CategoricalFocalCrossentropy(alpha=weights)
+    
+if optimizer == "adam":
+    optimizer = Adam(learning_rate=lr)
+elif optimizer == "sgd": 
+    optimizer = SGD(learning_rate=lr)
+
+
+model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
 model.fit(
     train_dataset,
