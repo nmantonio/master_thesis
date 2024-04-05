@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 
 def get_model(name, pretrained=True, trainable=True):
@@ -38,3 +39,9 @@ def get_preprocessing_func(name):
 def avg_weights(weights):
     avg = np.mean(weights, axis=2).reshape(weights[:, :, -1:, :].shape)
     return avg
+
+def plot_model(model_name):
+    model = get_model(model_name)
+    from keras.utils import plot_model
+    img_name = model_name + ".png"
+    plot_model(model, to_file=img_name)
