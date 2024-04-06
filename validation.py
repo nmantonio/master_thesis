@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 import argparse
 
@@ -79,7 +79,7 @@ for idx, row in df.iterrows():
     val_df = pd.concat([val_df, pd.DataFrame({"new_filename": [row["new_filename"]], "true": [row[task]], "pred": [predicted_label[0][0]]})])
 
 # Store results
-val_df.to_csv(os.path.join(save_path, "validation_results.csv"))
+val_df.to_csv(os.path.join(save_path, "validation_results.csv"), index=False)
 with open(os.path.join(save_path, "validation_raw.json"), "w") as json_file: 
     json.dump(predictions, json_file, indent=4)
     
@@ -105,3 +105,8 @@ fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=val_df["true"].unique())
 disp.plot(ax = ax, xticks_rotation=30, cmap="Blues")
 disp.figure_.savefig(os.path.join(save_path, "confusion_matrix.png"))
+
+# Pycm 
+from pycm import ConfusionMatrix
+cm = ConfusionMatrix(val_df["true"].tolist(), val_df["pred"].tolist())
+cm.save_html(os.path.join(save_path, "report"))
