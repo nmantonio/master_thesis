@@ -31,7 +31,7 @@ parser = argparse
 
 parser = argparse.ArgumentParser(description='Script for training a model')
 
-parser.add_argument('--model_name', type=str, default='xception', help='Name of the model (default: xception)', choices=['xception', 'mobilenet'])
+parser.add_argument('--model_name', type=str, default='xception', help='Name of the model (default: xception)', choices=['xception', 'mobilenet', 'densenet'])
 parser.add_argument('--fold_idx', type=str, required=True, help='Fold index')
 parser.add_argument('--task', type=str, required=True, help='Type of task', choices=['detection', 'classification'])
 parser.add_argument('--save_path', type=str, required=True, help='Path to save the trained model')
@@ -156,7 +156,7 @@ model.fit(
         EarlyStopping(patience=patience, restore_best_weights=True),
         CSVLogger(os.path.join(save_path, "train_log.csv"))
     ],
-    verbose=1
+    verbose=2
 )
 
 model.save(os.path.join(save_path, "model.keras"))

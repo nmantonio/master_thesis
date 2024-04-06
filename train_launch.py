@@ -46,7 +46,7 @@ if found:
         instruction += f' --{arg} {value}'
         
     print(instruction)
-    # os.system(instruction)
+    os.system(instruction)
 
 import json
 with open(os.path.join(TRAIN_PATH, train_name, "avg_results.json"), "r") as json_file:

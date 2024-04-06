@@ -9,7 +9,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Scrip for performing a 5-fold training")
 parser.add_argument("--device", type=str, default="0", help="GPU device (default: '0')")
 parser.add_argument("--train_name", type=str, required=True, help="Name of the folder containing the trainings")
-parser.add_argument("--model_name", type=str, default="xception", help="Name of the model", choices=['xception', 'mobilenet'])
+parser.add_argument("--model_name", type=str, default="xception", help="Name of the model", choices=['xception', 'mobilenet', 'densenet'])
 parser.add_argument('--task', type=str, required=True, help='Type of task', choices=['detection', 'classification'])
 parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (only if pretrained=True) (default: True)')
 parser.add_argument("--pretrained", type=bool, default=True, help="Whether to use pretrained weights")

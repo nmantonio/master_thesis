@@ -18,6 +18,14 @@ def get_model(name, pretrained=True, trainable=True):
         else: 
             from keras.applications import MobileNetV3Small
             model = MobileNetV3Small(include_top=False, weights="None", input_shape=(512, 512, 1), include_preprocessing=False)
+            
+    elif name == "densenet":
+        if pretrained: 
+            from models.densenet import modify_densenet
+            model = modify_densenet(trainable=trainable)
+        else: 
+            from keras.applications import DenseNet201
+            model = DenseNet201(include_top=False, weights="None", input_shape=(512, 512, 1))
         
     else:
         raise NotImplementedError(f"'{name}' model name not implemented!")
@@ -30,6 +38,17 @@ def get_preprocessing_func(name):
         
     elif name == "mobilenet":
         from keras.applications.mobilenet_v3 import preprocess_input
+        
+    elif name == "densenet":
+        from keras.src import backend
+        def preprocess_input(x):
+            x = x.astype(backend.floatx(), copy=False)
+            x /= 255.0
+            mean = np.mean([0.485, 0.456, 0.406])
+            std = np.mean([0.229, 0.224, 0.225])
+            
+            x = (x - mean)/std
+            return x
         
     else:
         raise NotImplementedError(f"'{name}' model name not implemented!")
