@@ -15,7 +15,7 @@ from paths import *
 from utils import load_encoder
 from models.utils import get_preprocessing_func
 
-
+from keras import backend as K 
 from keras.models import load_model
 import pandas as pd
 from natsort import natsorted
@@ -110,3 +110,5 @@ disp.figure_.savefig(os.path.join(save_path, "confusion_matrix.png"))
 from pycm import ConfusionMatrix
 cm = ConfusionMatrix(val_df["true"].tolist(), val_df["pred"].tolist())
 cm.save_html(os.path.join(save_path, "report"))
+
+K.clear_session()
