@@ -11,7 +11,7 @@ device = args.device
 while True: 
     df = pd.read_excel(TRAIN_SHEET, sheet_name="trains")
     df["train_name"] = df["train_name"].astype(str)
-    print(df)
+
     found = False
     for idx, row in df.iterrows():
         if row["done"] == "no":
@@ -39,26 +39,23 @@ while True:
         df.to_excel(writer, sheet_name="trains", index=False)
     # df.to_excel(TRAIN_SHEET, index=False, header=True, sheet_name="trains")
     del df
-    # print(dict(row))
-    # print(df)
-    from pprint import pprint
-    if found:
-        pprint(train_data, width=1)
+
+    # from pprint import pprint
+    # pprint(train_data, width=1)
+    
+    instruction = "python fold_train_and_val.py"
+    for arg, value in train_data.items():
+        instruction += f' --{arg} {value}'
         
-        instruction = "python fold_train_and_val.py"
-        for arg, value in train_data.items():
-            instruction += f' --{arg} {value}'
-            
-        print(instruction)
-        os.system(instruction)
+    print(instruction)
+    os.system(instruction)
 
     import json
     with open(os.path.join(TRAIN_PATH, train_name, "avg_results.json"), "r") as json_file:
         train_results = json.load(json_file)
     train_results["train_name"] = train_name
     results_df = pd.read_excel(RESULTS_SHEET)
-    results_df.loc[idx] = train_results
-    # results_df = pd.concat([results_df, pd.DataFrame(data=train_results, index=[0])])
+    results_df = pd.concat([results_df, pd.DataFrame(data=train_results, index=[0])])
     results_df.to_excel(RESULTS_SHEET, index=False, header=True)
     del results_df
 
