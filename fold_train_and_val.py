@@ -32,6 +32,7 @@ import shutil
 import time
 
 train_name = args.train_name
+print("TRAIN NAME: ", train_name)
 save_path = os.path.join(TRAIN_PATH, train_name)
 if os.path.exists(save_path):
     response = input("The directory already exists. Do you want to remove it? (y/N): ")
@@ -93,8 +94,8 @@ for fold_idx in FOLDS:
     
     print(f"\nFold {fold_idx} validation finished!.")
     
-    print("\nSleeping 30 secs!")
-    time.sleep(1)
+    print("\nSleeping 3 min!")
+    time.sleep(180)
     
 # Store mean val results
 import json
