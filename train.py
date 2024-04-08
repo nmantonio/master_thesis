@@ -1,5 +1,5 @@
 """
-python train.py --model_name mobilenet --fold_idx 1 --task detection --save_path /home/anadal/Experiments/TFM/master_thesis/test --epochs 15
+python train.py --model_name densenet --fold_idx 1 --task detection --save_path /home/anadal/Experiments/TFM/master_thesis/test --epochs 15
 
 python train.py --model_name --fold_idx --task --save_path --trainable_core --batch_size --augmentation_prob --epochs --patience --lr --database_path
 """
@@ -17,9 +17,10 @@ import numpy as np
 from models.utils import get_model, get_preprocessing_func
 from models.tops import *
 
+from keras import backend as K 
 from keras.models import Model
 from keras.optimizers import Adam, SGD
-from keras.callbacks import EarlyStopping, CSVLogger
+from keras.callbacks import EarlyStopping, CSVLogger, ReduceLROnPlateau
 from keras.losses import CategoricalFocalCrossentropy
 from utils import compute_loss_weights  
 
@@ -141,7 +142,7 @@ if loss == "categorical_focal_crossentropy":
 if optimizer == "adam":
     optimizer = Adam(learning_rate=lr)
 elif optimizer == "sgd": 
-    optimizer = SGD(learning_rate=lr)
+    optimizer = SGD(learning_rate=lr, momentum=0.5)
 
 
 model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
@@ -153,8 +154,15 @@ model.fit(
     validation_data=val_dataset,
     validation_steps=val_steps_per_epoch,
     callbacks = [
-        EarlyStopping(patience=patience, restore_best_weights=True),
-        CSVLogger(os.path.join(save_path, "train_log.csv"))
+        EarlyStopping(patience=patience, restore_best_weights=True, verbose=1),
+        CSVLogger(os.path.join(save_path, "train_log.csv")), 
+        # ReduceLROnPlateau(
+        #     monitor="val_loss", 
+        #     factor=0.1, 
+        #     patience=5, 
+        #     verbose=1, 
+        #     min_lr=0.000001
+        # )
     ],
     verbose=2
 )
@@ -165,3 +173,5 @@ compute_graphics(
     train_log = os.path.join(save_path, "train_log.csv"), 
     save_path = save_path
 )
+
+K.clear_session()
