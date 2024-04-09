@@ -80,7 +80,7 @@ with open(os.path.join(save_path, "train_args.json"), "w") as json_file:
 
 
 # Preprocessing
-preprocessing_func = get_preprocessing_func(name=model_name)
+preprocessing_func = get_preprocessing_func(name=model_name, pretrained=pretrained, task=task, database=database)
 
 # Read CSV
 if task == "detection":
@@ -125,7 +125,7 @@ val_dataset = get_dataset(
 )
 
 # base_model = Xception(weights=None, include_top=False, input_shape=(512, 512, 1))
-base_model = get_model(name="xception", pretrained=pretrained, trainable=trainable_core)
+base_model = get_model(name=model_name, pretrained=pretrained, trainable=trainable_core)
 
 x = base_model.output
 x = get_top(top_idx=top_idx)(x)
@@ -133,7 +133,7 @@ predictions = Dense(n_classes, activation="softmax")(x)
 
 # Create the fine-tuned model
 model = Model(inputs=base_model.input, outputs=predictions, name=model_name)
-# model.summary(line_length=175)
+model.summary(line_length=175)
 
 if loss == "categorical_focal_crossentropy":
     weights = compute_loss_weights(task, df) 
