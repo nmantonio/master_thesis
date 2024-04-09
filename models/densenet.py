@@ -1,7 +1,7 @@
 from keras.models import Model
 from keras.applications import DenseNet201
 
-from utils import avg_weights
+from models.utils import avg_weights
 
 def modify_densenet(trainable=True):
     original_model = DenseNet201(include_top=False, weights="imagenet", input_shape=(512, 512, 3))
@@ -52,5 +52,3 @@ def modify_densenet(trainable=True):
                 # target_layer.trainable = False
                 
     return model
-
-modify_densenet()

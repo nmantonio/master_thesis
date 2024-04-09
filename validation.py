@@ -30,6 +30,7 @@ with open(os.path.join(train_path, "train_args.json"), 'r') as json_file:
 
 model_name = data["model_name"]
 fold_idx = data["fold_idx"]
+pretrained = data["pretrained"]
 task = data["task"]
 database = data["database"]
 if database == "cropped":
@@ -37,7 +38,7 @@ if database == "cropped":
 else: 
     database = DATABASE_PATH
 
-preprocessing = get_preprocessing_func(model_name)
+preprocessing = get_preprocessing_func(name=model_name, pretrained=pretrained, task=task, database=database)
 
 if task == "detection":
     encoder = load_encoder(DETECTION_ENCODER)
