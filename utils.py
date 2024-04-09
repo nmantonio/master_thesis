@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 import pandas as pd
+from paths import *
+import cv2
 
 def load_encoder(encoder_path):
     with open(encoder_path, "rb") as encoder_file: 
@@ -65,3 +67,51 @@ def compute_loss_weights(task, df):
     # weights = compute_class_weight(class_weight="balanced", y=encoded, classes=np.unique(encoded))
     
     return weights
+
+def compute_mu_sigma(fold_idx, database_path, task):
+    task = task.lower()
+    if task == "detection":
+        df = pd.read_csv(DETECTION_CSV)
+    elif task == "classification":
+        df = pd.read_csv(CLASSIFICATION_CSV)
+    else: 
+        raise ValueError(f"Task not supported. Try 'detection' or 'classification'.")
+    
+    FOLDS = ["1", "2", "3", "4", "5"]
+    
+    FOLDS.remove(fold_idx)
+    df = df[df["split"].isin(FOLDS)]
+
+    N = 0
+    sum_pixel_values = 0
+    sum_sq_pixel_values = 0
+    
+    for idx, row in df.iterrows():
+        image = cv2.imread(os.path.join(database_path, row["new_filename"]), 0)
+        image = (image).astype(np.float32) / 255.0
+        
+        N += 1
+        sum_pixel_values += np.sum(image)
+        sum_sq_pixel_values += np.sum(np.square(image))
+    
+    mean = sum_pixel_values / (N * image.shape[0] * image.shape[1])
+    std = np.sqrt((sum_sq_pixel_values / (N * image.shape[0] * image.shape[1])) - np.square(mean))
+    
+    return mean, std
+
+# for fold_idx in range(1, 6):
+#     mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "detection")
+#     print(f"{fold_idx}: {mean}, {std}")
+    
+# for fold_idx in range(1, 6):
+#     mean, std = compute_mu_sigma(str(fold_idx), CROPPED_DATABASE_PATH, "detection")
+#     print(f"{fold_idx}: {mean}, {std}")
+    
+
+# for fold_idx in range(1, 6):
+#     mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "classification")
+#     print(f"{fold_idx}: {mean}, {std}")
+    
+# for fold_idx in range(1, 6):
+#     mean, std = compute_mu_sigma(str(fold_idx), CROPPED_DATABASE_PATH, "classification")
+#     print(f"{fold_idx}: {mean}, {std}")

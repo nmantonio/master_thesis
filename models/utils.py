@@ -1,6 +1,6 @@
 import numpy as np
 import os
-
+from paths import *
 
 def get_model(name, pretrained=True, trainable=True):
     if name == "xception": 
@@ -32,7 +32,7 @@ def get_model(name, pretrained=True, trainable=True):
     
     return model
 
-def get_preprocessing_func(name):
+def get_preprocessing_func(name, pretrained=None, database=None, task=None):
     if name == "xception":
         from keras.applications.xception import preprocess_input
         
@@ -41,15 +41,40 @@ def get_preprocessing_func(name):
         
     elif name == "densenet":
         from keras.src import backend
-        def preprocess_input(x):
-            x = x.astype(backend.floatx(), copy=False)
-            x /= 255.0
-            mean = np.mean([0.485, 0.456, 0.406])
-            std = np.mean([0.229, 0.224, 0.225])
+
+        if pretrained: 
+            def preprocess_input(x):
+                x = x.astype(backend.floatx(), copy=False)
+                x /= 255.0
+                mean = np.mean([0.485, 0.456, 0.406])
+                std = np.mean([0.229, 0.224, 0.225])
+                
+                x = (x - mean)/std
+                return x
             
-            x = (x - mean)/std
-            return x
-        
+        else: 
+            if task == "detection":
+                if database==DATABASE_PATH:
+                    mean = np.array([0.496])
+                    std = np.array([0.257])
+                elif database==CROPPED_DATABASE_PATH:
+                    mean = np.array([0.116])
+                    std = np.array([0.210]) 
+            elif task == "classification":
+                if database==DATABASE_PATH:
+                    mean = np.array([0.501])
+                    std = np.array([0.257])
+                elif database==CROPPED_DATABASE_PATH:
+                    mean = np.array([0.119])
+                    std = np.array([0.217]) 
+            else: 
+                raise ValueError(f"{task} not available! (PREPROCESSING FUNC SELECTION)") 
+            print(f"Normalization params: {mean, std}")
+            def preprocess_input(x):
+                x = x.astype(backend.floatx(), copy=False)
+                x /= 255.0
+                x = (x - mean)/std
+                return x
     else:
         raise NotImplementedError(f"'{name}' model name not implemented!")
         
