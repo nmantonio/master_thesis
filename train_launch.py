@@ -25,7 +25,7 @@ while True:
                 train_name += f"{key}_{value}_"
             train_name = train_name[:-1]
             
-            df.loc[idx, "done"] = "inprogress"
+            df.loc[idx, "done"] = f"{device}_inprogress"
             df.loc[idx, "train_name"] = train_name
             train_data["train_name"] = train_name  
             train_data["device"] = device
