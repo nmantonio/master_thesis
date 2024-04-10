@@ -1,29 +1,28 @@
-import tensorflow as tf
-from matplotlib import pyplot as plt
-from tensorflow.keras.preprocessing import image
-import numpy as np
-from tensorflow.keras.models import load_model
-from data_loader import preprocess
 import os
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
+import tensorflow as tf
+import numpy as np
+from keras.models import load_model
+# from data_loader import preprocess
+from utils import load_encoder
+from models.utils import get_preprocessing_func
+
 import cv2
-
-DATABASE_PATH = r"C:\Users\tonin\Desktop\Master\TFM\PROCESSED_DATABASE"
-
-model = load_model(r"C:\Users\tonin\Desktop\Master\TFM\xception_sgd_lowlr.h5")
-
-# preds = model.predict(x)
-# print('Predicted:', preds[0])
-
-# pred_class = np.round(preds[0]).astype(np.uint8)[0]
-# print(pred_class)
-
-
+from paths import *
+from natsort import natsorted
+import json
+import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras import Model
-from PIL import Image
+from keras.models import load_model
+from keras import Model
+
+LAST_CONV_LAYERS = {
+    "xception": "block14_sepconv2_act",
+    "mobilenet": "multiply_17", 
+    "densenet": "relu"
+}
 
 
 def show_imgwithheat(img_path, heatmap, alpha=0.4, return_array=False):
@@ -44,15 +43,8 @@ def show_imgwithheat(img_path, heatmap, alpha=0.4, return_array=False):
     superimposed_img = heatmap * alpha + img
     superimposed_img = np.clip(superimposed_img, 0, 255).astype("uint8")
     superimposed_img = cv2.cvtColor(superimposed_img, cv2.COLOR_BGR2RGB)
-
-    # imgwithheat = Image.fromarray(superimposed_img)
-    # try:
-    #     display(imgwithheat)
-    # except NameError:
-    #     imgwithheat.show()
-
-    # if return_array:
-    return superimposed_img
+    
+    return superimposed_img, heatmap
 
 def grad_cam(model, img,
              layer_name="block14_sepconv2_act",
@@ -79,11 +71,11 @@ def grad_cam(model, img,
         if category_id is None:
             category_id = np.argmax(predictions[0])
         output = predictions[:, category_id]
-        # print("OUTPUT: ", output)
-        if output[0] < 0.5:
-            print ("Predicted: abnormal")
-        else: 
-            print("Predicted: normal")
+        # print("OUTPUT: ", output, output.shape)
+        one_hot_pred = np.zeros_like(predictions[0])
+        one_hot_pred[category_id] = 1
+        # print("PRED: ", encoder.inverse_transform(one_hot_pred.reshape(1, -1)))
+        
         grads = gtape.gradient(output, conv_output)
         pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
@@ -96,21 +88,68 @@ def grad_cam(model, img,
 
     return np.squeeze(heatmap)
 
-print("------------------------------------------------")
-img_list = os.listdir(DATABASE_PATH)
-np.random.shuffle(img_list)
-for img_path in img_list:
-    pathology = img_path.split("_")[0]
-    print("True: ", pathology)
-    img_path = os.path.join(DATABASE_PATH, img_path)
-    # img_path = os.path.join(DATABASE_PATH, "viralpneumonia_DS5_person1424_virus_2437.png")
-    img = cv2.imread(img_path, 0)
-    x = np.expand_dims(img, axis=-1)
-    x = preprocess(x)
+if __name__ == "__main__":
+    train_list = natsorted(os.listdir(TRAIN_PATH))
 
-    heatmap = grad_cam(model, x)
-    overlayed_image = cv2.cvtColor(show_imgwithheat(img_path, heatmap), cv2.COLOR_BGR2RGB)
-    cv2.imshow('', overlayed_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    print("--------------------------------------------")
+    for train_folder in train_list: 
+        print(f"Starting gradcam: {train_folder}")
+        for fold_idx in range(1, 2):
+            fold_path = os.path.join(TRAIN_PATH, train_folder, str(fold_idx))
+            print(f"Fold idx: {fold_idx}")
+            if os.path.exists(os.path.join(fold_path, "gradcam")):
+                continue
+            os.makedirs(os.path.join(fold_path, "gradcam"), exist_ok=True)
+            
+            model = load_model(os.path.join(fold_path, "model.keras"), compile=False)
+            
+            # for layer in model.layers:
+            #     print(layer.name)
+            # raise Exception
+
+            with open(os.path.join(fold_path, "train_args.json"), 'r') as json_file:
+                train_dict = json.load(json_file)
+                
+            task = train_dict["task"]
+            model_name = train_dict["model_name"]
+            fold_idx = train_dict["fold_idx"]
+            pretrained = train_dict["pretrained"]
+            task = train_dict["task"]
+            database = train_dict["database"]
+            if database == "cropped":
+                database = CROPPED_DATABASE_PATH
+            else: 
+                database = DATABASE_PATH
+
+            preprocess = get_preprocessing_func(name=model_name, pretrained=pretrained, task=task, database=database)
+              
+            if task == "detection": 
+                encoder = load_encoder(DETECTION_ENCODER)
+                df = pd.read_csv(DETECTION_CSV)
+            elif task == "classification":
+                encoder = load_encoder(CLASSIFICATION_ENCODER)
+                df = pd.read_csv(CLASSIFICATION_CSV)
+            else: 
+                raise ValueError(f"Task not supported. Try 'detection' or 'classification'.")
+
+            df = df[df["split"] == str(fold_idx)]
+            
+            for idx, row in df.iterrows():
+                # print(row["new_filename"])
+                img = cv2.imread(os.path.join(database, row["new_filename"]), 0)
+                img = np.expand_dims(img, axis=-1)
+                img = preprocess(img)
+                
+                heatmap = grad_cam(model, img, layer_name=LAST_CONV_LAYERS[model_name])
+                
+                ol_image, heatmap = show_imgwithheat(os.path.join(database, row["new_filename"]), heatmap)
+                ol_image = cv2.cvtColor(ol_image, cv2.COLOR_BGR2RGB)
+                cv2.imwrite(os.path.join(fold_path, "gradcam", row["new_filename"]), ol_image)
+                # print(ol_image.shape)
+                # cv2.imwrite(os.path.join(IMAGES_CHECK, row["new_filename"]), heatmap)
+
+            else: 
+                print(f"Fold {fold_idx} done!")
+                del model
+                
+        else: 
+            print(f"Folder {train_folder} done!")
