@@ -40,17 +40,10 @@ def get_preprocessing_func(name, pretrained=None, database=None, task=None):
         from keras.applications.mobilenet_v3 import preprocess_input
         
     elif name == "densenet":
-        from keras.src import backend
 
         if pretrained: 
-            def preprocess_input(x):
-                x = x.astype(backend.floatx(), copy=False)
-                x /= 255.0
-                mean = np.mean([0.485, 0.456, 0.406])
-                std = np.mean([0.229, 0.224, 0.225])
-                
-                x = (x - mean)/std
-                return x
+            mean = np.mean([0.485, 0.456, 0.406])
+            std = np.mean([0.229, 0.224, 0.225])
             
         else: 
             if task == "detection":
@@ -58,23 +51,28 @@ def get_preprocessing_func(name, pretrained=None, database=None, task=None):
                     mean = np.array([0.496])
                     std = np.array([0.257])
                 elif database==CROPPED_DATABASE_PATH:
-                    mean = np.array([0.116])
-                    std = np.array([0.210]) 
+                    mean = np.array([0.438])
+                    std = np.array([0.160]) 
             elif task == "classification":
                 if database==DATABASE_PATH:
                     mean = np.array([0.501])
                     std = np.array([0.257])
                 elif database==CROPPED_DATABASE_PATH:
-                    mean = np.array([0.119])
-                    std = np.array([0.217]) 
+                    mean = np.array([0.456])
+                    std = np.array([0.162]) 
             else: 
                 raise ValueError(f"{task} not available! (PREPROCESSING FUNC SELECTION)") 
-            print(f"Normalization params: {mean, std}")
-            def preprocess_input(x):
-                x = x.astype(backend.floatx(), copy=False)
-                x /= 255.0
+            
+        from keras.src import backend
+        def preprocess_input(x, mask=None):
+            x = x.astype(backend.floatx(), copy=False)
+            x /= 255.0
+            if mask is not None:
+                x[mask > 0] = (x - mean)/std
+            else:
                 x = (x - mean)/std
-                return x
+            return x
+
     else:
         raise NotImplementedError(f"'{name}' model name not implemented!")
         

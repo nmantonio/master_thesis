@@ -82,36 +82,44 @@ def compute_mu_sigma(fold_idx, database_path, task):
     FOLDS.remove(fold_idx)
     df = df[df["split"].isin(FOLDS)]
 
-    N = 0
     sum_pixel_values = 0
     sum_sq_pixel_values = 0
+    total_pixels = 0
     
     for idx, row in df.iterrows():
         image = cv2.imread(os.path.join(database_path, row["new_filename"]), 0)
         image = (image).astype(np.float32) / 255.0
+
+        if database_path == CROPPED_DATABASE_PATH:
+            mask = cv2.imread(os.path.join(MASKS_PATH, row["new_filename"]), 0)
+            mask = cv2.resize(mask, (512, 512))
+            image = image[mask>0]
         
-        N += 1
+        total_pixels += image.size
         sum_pixel_values += np.sum(image)
         sum_sq_pixel_values += np.sum(np.square(image))
     
-    mean = sum_pixel_values / (N * image.shape[0] * image.shape[1])
-    std = np.sqrt((sum_sq_pixel_values / (N * image.shape[0] * image.shape[1])) - np.square(mean))
+    mean = sum_pixel_values / (total_pixels)
+    std = np.sqrt((sum_sq_pixel_values / (total_pixels)) - np.square(mean))
     
     return mean, std
 
+# print("Detection") 
 # for fold_idx in range(1, 6):
 #     mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "detection")
 #     print(f"{fold_idx}: {mean}, {std}")
-    
+
+  
 # for fold_idx in range(1, 6):
 #     mean, std = compute_mu_sigma(str(fold_idx), CROPPED_DATABASE_PATH, "detection")
 #     print(f"{fold_idx}: {mean}, {std}")
     
-
+# print("Classification")
 # for fold_idx in range(1, 6):
 #     mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "classification")
 #     print(f"{fold_idx}: {mean}, {std}")
-    
+
+
 # for fold_idx in range(1, 6):
 #     mean, std = compute_mu_sigma(str(fold_idx), CROPPED_DATABASE_PATH, "classification")
 #     print(f"{fold_idx}: {mean}, {std}")

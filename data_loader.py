@@ -97,8 +97,12 @@ def get_dataset(
                 
                 image = np.expand_dims(image, axis=-1)
                 # cv2.imwrite(os.path.join(IMAGES_CHECK, filename), image)
-
-                image_batch[idx] = preprocessing_func(image)
+                if database_path == CROPPED_DATABASE_PATH: 
+                    mask = cv2.imread(os.path.join(MASKS_PATH, filename), 0)
+                    mask = cv2.resize(mask, (512, 512))
+                    image_batch[idx] = preprocessing_func(image, mask=mask)
+                else: 
+                    image_batch[idx] = preprocessing_func(image)
 
                 label_batch[idx] = encoder.transform(pd.DataFrame({task: [disease]})).toarray()
                 # print(label_batch[idx])
