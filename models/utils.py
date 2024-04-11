@@ -1,6 +1,8 @@
 import numpy as np
 import os
 from paths import *
+from keras.src import backend
+
 
 def get_model(name, pretrained=True, trainable=True):
     if name == "xception": 
@@ -34,10 +36,34 @@ def get_model(name, pretrained=True, trainable=True):
 
 def get_preprocessing_func(name, pretrained=None, database=None, task=None):
     if name == "xception":
-        from keras.applications.xception import preprocess_input
+        if database == DATABASE_PATH:
+            from keras.applications.xception import preprocess_input
+        elif database == CROPPED_DATABASE_PATH:
+            def preprocess_input(x, mask=None):
+                x = x.astype(backend.floatx(), copy=False)
+                x /= 127.5
+                if mask is not None:
+                    x[mask > 0] = x[mask > 0] - 1
+                else:
+                    x = x - 1
+                return x
+        else: 
+            raise ValueError("Wrong database path (preprocessing func)")
         
     elif name == "mobilenet":
-        from keras.applications.mobilenet_v3 import preprocess_input
+        if database == DATABASE_PATH:
+            from keras.applications.mobilenet_v3 import preprocess_input
+        elif database == CROPPED_DATABASE_PATH:
+            def preprocess_input(x, mask=None):
+                x = x.astype(backend.floatx(), copy=False)
+                x /= 127.5
+                if mask is not None:
+                    x[mask > 0] = x[mask > 0] - 1
+                else:
+                    x = x - 1
+                return x
+        else: 
+            raise ValueError("Wrong database path (preprocessing func)")
         
     elif name == "densenet":
 
@@ -63,12 +89,11 @@ def get_preprocessing_func(name, pretrained=None, database=None, task=None):
             else: 
                 raise ValueError(f"{task} not available! (PREPROCESSING FUNC SELECTION)") 
             
-        from keras.src import backend
         def preprocess_input(x, mask=None):
             x = x.astype(backend.floatx(), copy=False)
             x /= 255.0
             if mask is not None:
-                x[mask > 0] = (x - mean)/std
+                x[mask > 0] = (x[mask > 0] - mean)/std
             else:
                 x = (x - mean)/std
             return x
