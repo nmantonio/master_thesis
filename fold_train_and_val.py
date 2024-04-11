@@ -101,6 +101,7 @@ for fold_idx in FOLDS:
 import json
 import pandas as pd
 
+FOLDS = ["1", "2", "3", "4", "5"]
 global_metrics = {}
 for fold_idx in FOLDS:
     fold_path = os.path.join(save_path, fold_idx)
