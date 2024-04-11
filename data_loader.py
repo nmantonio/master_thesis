@@ -5,17 +5,14 @@ import pandas as pd
 from utils import load_encoder
 from paths import *
 
-def preprocess(image):
-    return (image.astype(np.float32) / 127.5) - 1.0
-
 def get_dataset(
     database_path,
     fold_idx, 
     batch_size,
     mode, # train or val/test, 
     task, # detection or classification
+    preprocessing_func,
     repeat=True,
-    preprocessing_func = preprocess,
     augmentation=0.25 # augment prob
 ):
     fold_idx = str(fold_idx)
