@@ -60,8 +60,14 @@ for idx, row in df.iterrows():
     
     image = cv2.imread(os.path.join(database, row["new_filename"]), 0)
     image = np.expand_dims(image, axis=-1)
+    
+    if database == CROPPED_DATABASE_PATH: 
+        mask = cv2.imread(os.path.join(MASKS_PATH, row["new_filename"]), 0)
+        mask = cv2.resize(mask, (512, 512))
+        image = preprocessing(image, mask=mask)
+    else: 
+        image = preprocessing(image)
 
-    image = preprocessing(image)
     image = np.expand_dims(image, axis=0)
 
     image_pred = model.predict(image, verbose=0)[0]
