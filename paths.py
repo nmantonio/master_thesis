@@ -12,6 +12,7 @@ MASKS_PATH = os.path.join(TFM_PATH, "PROCESSED_MASKS")
 
 DETECTION_CSV = os.path.join(GIT_PATH, "abnormal_detection_selection.csv")
 CLASSIFICATION_CSV = os.path.join(GIT_PATH, "disease_classification_selection.csv")
+BBOX_CSV = os.path.join(GIT_PATH, "pulmonary_fibrosis_BB.csv")
 
 ENCODERS_PATH = os.path.join(GIT_PATH, "encoders")
 DETECTION_ENCODER = os.path.join(ENCODERS_PATH, "detection_encoder")
