@@ -28,6 +28,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"]=args.device
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+from utils import plot_summary_graphs, combine_fold_data
 import shutil
 import time
 
@@ -127,3 +128,5 @@ with open(os.path.join(save_path, "avg_results.json"), "w") as results_file:
 results_df = pd.DataFrame(data=global_metrics, index=[0])
 results_df.to_excel(os.path.join(save_path, "avg_results.xlsx"), index=False, header=True)
     
+# Plot summary graphs
+plot_summary_graphs(save_path)

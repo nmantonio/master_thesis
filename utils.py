@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from paths import *
 import cv2
+from matplotlib import pyplot as plt
 
 def load_encoder(encoder_path):
     with open(encoder_path, "rb") as encoder_file: 
@@ -47,6 +48,68 @@ def compute_graphics(train_log, save_path):
     plt.savefig(os.path.join(save_path, 'loss_plot.png'))
     # plt.show()
     
+def combine_fold_data(root_folder):
+    all_data = []
+    for fold_folder in os.listdir(root_folder):
+        fold_path = os.path.join(root_folder, fold_folder)
+        if os.path.isdir(fold_path):
+            for csv_file in os.listdir(fold_path):
+                if csv_file.endswith('.csv'):
+                    csv_path = os.path.join(fold_path, csv_file)
+                    df = pd.read_csv(csv_path)
+                    df['Fold'] = int(fold_folder)  # Add fold number to identify
+                    all_data.append(df)
+    combined_data = pd.concat(all_data, ignore_index=True)
+    return combined_data
+
+def plot_summary_graphs(save_path):
+    """
+    Usage: 
+        root_folder = r""
+        plot_summary_graphs(root_folder)
+    """
+    # Define colors and line styles for training and validation data
+    colors = ['b', 'g', 'r', 'c', 'm']
+    line_styles = ['-', '--']
+    combined_data = combine_fold_data(save_path)
+    # Plot accuracy summary
+    plt.figure(figsize=(10, 5))
+    for i, fold in enumerate(combined_data['Fold'].unique()):
+        fold_data = combined_data[combined_data['Fold'] == fold]
+        for j, data_type in enumerate(['Training', 'Validation']):
+            linestyle = line_styles[j]
+            color = colors[i % len(colors)]
+            label = f'Fold {fold} {data_type} Accuracy'
+            if data_type == 'Training':
+                plt.plot(fold_data['epoch'], fold_data['accuracy'], linestyle, color=color, label=label, linewidth=1.0)
+            else:
+                plt.plot(fold_data['epoch'], fold_data['val_accuracy'], linestyle, color=color, label=label, linewidth=1.0)
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.title('Training and Validation Accuracy Summary')
+    plt.legend()
+    plt.savefig(os.path.join(save_path, 'accuracy_summary_plot.png'))
+    plt.close()
+
+    # Plot loss summary
+    plt.figure(figsize=(10, 5))
+    for i, fold in enumerate(combined_data['Fold'].unique()):
+        fold_data = combined_data[combined_data['Fold'] == fold]
+        for j, data_type in enumerate(['Training', 'Validation']):
+            linestyle = line_styles[j]
+            color = colors[i % len(colors)]
+            label = f'Fold {fold} {data_type} Loss'
+            if data_type == 'Training':
+                plt.plot(fold_data['epoch'], fold_data['loss'], linestyle, color=color, label=label, linewidth=1.0)
+            else:
+                plt.plot(fold_data['epoch'], fold_data['val_loss'], linestyle, color=color, label=label, linewidth=1.0)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss Summary')
+    plt.legend()
+    plt.savefig(os.path.join(save_path, 'loss_summary_plot.png'))
+    plt.close()
+    
 def compute_loss_weights(task, df):
     n = len(df)
     weights = np.zeros(shape=(len(df.classification.unique())))
@@ -69,6 +132,13 @@ def compute_loss_weights(task, df):
     return weights
 
 def compute_mu_sigma(fold_idx, database_path, task):
+    """
+    Usage:  
+        for fold_idx in range(1, 6):
+            mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "detection")
+            print(f"{fold_idx}: {mean}, {std}")
+    """
+
     task = task.lower()
     if task == "detection":
         df = pd.read_csv(DETECTION_CSV)
@@ -103,23 +173,3 @@ def compute_mu_sigma(fold_idx, database_path, task):
     std = np.sqrt((sum_sq_pixel_values / (total_pixels)) - np.square(mean))
     
     return mean, std
-
-# print("Detection") 
-# for fold_idx in range(1, 6):
-#     mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "detection")
-#     print(f"{fold_idx}: {mean}, {std}")
-
-  
-# for fold_idx in range(1, 6):
-#     mean, std = compute_mu_sigma(str(fold_idx), CROPPED_DATABASE_PATH, "detection")
-#     print(f"{fold_idx}: {mean}, {std}")
-    
-# print("Classification")
-# for fold_idx in range(1, 6):
-#     mean, std = compute_mu_sigma(str(fold_idx), DATABASE_PATH, "classification")
-#     print(f"{fold_idx}: {mean}, {std}")
-
-
-# for fold_idx in range(1, 6):
-#     mean, std = compute_mu_sigma(str(fold_idx), CROPPED_DATABASE_PATH, "classification")
-#     print(f"{fold_idx}: {mean}, {std}")
