@@ -59,6 +59,9 @@ def get_dataset(
             
             for idx, (filename, disease) in enumerate(data[start_idx:end_idx]):
                 image = cv2.imread(os.path.join(database_path, filename), 0)
+                if database_path == CROPPED_DATABASE_PATH: 
+                    mask = cv2.imread(os.path.join(MASKS_PATH, filename), 0)
+                    mask = cv2.resize(mask, (512, 512))
                 
                 if (augmentation > 0) and (mode == "train"): 
                     aug = ""
@@ -86,17 +89,20 @@ def get_dataset(
                         rotation_matrix = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
                         image = cv2.warpAffine(image, rotation_matrix, (cols, rows))
                         
+                        if database_path == CROPPED_DATABASE_PATH: 
+                            mask =  cv2.warpAffine(mask, rotation_matrix, (cols, rows))
+                        
                         aug += "rot"
                         
-                    if np.random.rand() < 0.005:    
+                    if (np.random.rand() < 0.005) and os.path.exists(AUGMENTED_IMAGES_CHECK):    
                         cv2.imwrite(os.path.join(AUGMENTED_IMAGES_CHECK, f"{aug}_{aug_idx}.png"), image)
                     aug_idx += 1
                 
                 image = np.expand_dims(image, axis=-1)
                 # cv2.imwrite(os.path.join(IMAGES_CHECK, filename), image)
-                if database_path == CROPPED_DATABASE_PATH: 
-                    mask = cv2.imread(os.path.join(MASKS_PATH, filename), 0)
-                    mask = cv2.resize(mask, (512, 512))
+                
+                if database_path == CROPPED_DATABASE_PATH:
+                    image = cv2.bitwise_and(image, image, mask=mask)
                     image_batch[idx] = preprocessing_func(image, mask=mask)
                 else: 
                     image_batch[idx] = preprocessing_func(image)
