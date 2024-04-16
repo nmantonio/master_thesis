@@ -98,13 +98,14 @@ def get_dataset(
                         cv2.imwrite(os.path.join(AUGMENTED_IMAGES_CHECK, f"{aug}_{aug_idx}.png"), image)
                     aug_idx += 1
                 
-                image = np.expand_dims(image, axis=-1)
                 # cv2.imwrite(os.path.join(IMAGES_CHECK, filename), image)
                 
                 if database_path == CROPPED_DATABASE_PATH:
                     image = cv2.bitwise_and(image, image, mask=mask)
+                    image = np.expand_dims(image, axis=-1)
                     image_batch[idx] = preprocessing_func(image, mask=mask)
                 else: 
+                    image = np.expand_dims(image, axis=-1)
                     image_batch[idx] = preprocessing_func(image)
 
                 label_batch[idx] = encoder.transform(pd.DataFrame({task: [disease]})).toarray()
