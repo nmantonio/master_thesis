@@ -92,7 +92,8 @@ if __name__ == "__main__":
                 # ol_image, heatmap = show_imgwithheat(os.path.join(database, row["new_filename"]), heatmap)
                 # ol_image = cv2.cvtColor(ol_image, cv2.COLOR_BGR2RGB)
                 
-                cv2.imwrite(os.path.join(fold_path, "lime", row["new_filename"]), mark_boundaries(temp / 2 + 0.5, mask)*255)
+                lime_image = cv2.cvtColor(mark_boundaries(temp / 2 + 0.5, mask)*255, cv2.COLOR_BGR2RGB)
+                cv2.imwrite(os.path.join(fold_path, "lime", row["new_filename"]), lime_image)
                 # print(ol_image.shape)
                 # cv2.imwrite(os.path.join(IMAGES_CHECK, row["new_filename"]), heatmap)
 
