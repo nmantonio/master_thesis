@@ -51,9 +51,7 @@ def get_preprocessing_func(name, pretrained=None, database=None, task=None):
             raise ValueError("Wrong database path (preprocessing func)")
         
     elif name == "mobilenet":
-        if database == DATABASE_PATH:
-            from keras.applications.mobilenet_v3 import preprocess_input
-        elif database == CROPPED_DATABASE_PATH:
+        if database == DATABASE_PATH or database == CROPPED_DATABASE_PATH:
             def preprocess_input(x, mask=None):
                 x = x.astype(backend.floatx(), copy=False)
                 x /= 127.5
