@@ -111,23 +111,23 @@ def plot_summary_graphs(save_path):
     plt.close()
     
 def compute_loss_weights(task, df):
-    n = len(df)
-    weights = np.zeros(shape=(len(df.classification.unique())))
-    if task == "classification":
-        from paths import CLASSIFICATION_ENCODER
-        encoder = load_encoder(CLASSIFICATION_ENCODER)
+    # n = len(df)
+    # weights = np.zeros(shape=(len(df.classification.unique())))
+    # if task == "classification":
+    #     from paths import CLASSIFICATION_ENCODER
+    #     encoder = load_encoder(CLASSIFICATION_ENCODER)
         
-        for disease in df.classification.unique():
-            disease_idx  = np.argmax(encoder.transform(pd.DataFrame({task: [disease]})).toarray())
+    #     for disease in df.classification.unique():
+    #         disease_idx  = np.argmax(encoder.transform(pd.DataFrame({task: [disease]})).toarray())
 
-            weights[disease_idx] = (n - len(df[df["classification"] == disease])) / n
+    #         weights[disease_idx] = (n - len(df[df["classification"] == disease])) / n
             
-        weights = (weights - np.min(weights)/2) / (np.max(weights) - np.min(weights)/2)
+    #     weights = (weights - np.min(weights)/2) / (np.max(weights) - np.min(weights)/2)
     # print(weights)
     
-    # from sklearn.utils.class_weight import compute_class_weight
-    # encoded = df[task]
-    # weights = compute_class_weight(class_weight="balanced", y=encoded, classes=np.unique(encoded))
+    from sklearn.utils.class_weight import compute_class_weight
+    encoded = df[task]
+    weights = compute_class_weight(class_weight="balanced", y=encoded, classes=np.unique(encoded))
     
     return weights
 

@@ -154,7 +154,7 @@ model.fit(
     validation_data=val_dataset,
     validation_steps=val_steps_per_epoch,
     callbacks = [
-        EarlyStopping(patience=patience, restore_best_weights=True, verbose=1),
+        EarlyStopping(patience=patience, restore_best_weights=True, verbose=1, start_from_epoch=10),
         CSVLogger(os.path.join(save_path, "train_log.csv")), 
         # ReduceLROnPlateau(
         #     monitor="val_loss", 
