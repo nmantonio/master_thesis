@@ -82,7 +82,7 @@ for fold_idx in FOLDS:
         --loss {loss}\
         | tee {os.path.join(save_path, f'log_{fold_idx}.txt')}"
     
-    # os.system(train_instruction)
+    os.system(train_instruction)
     
     print(f"\nFold {fold_idx} training finished!")
     
