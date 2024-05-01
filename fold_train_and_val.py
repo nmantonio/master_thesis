@@ -42,7 +42,7 @@ if os.path.exists(save_path):
     else:
         print("Exiting program...")
         exit()
-os.makedirs(save_path)
+os.makedirs(save_path, exist_ok=True)
 
 model_name = args.model_name
 task = args.task
@@ -58,14 +58,13 @@ top_idx = args.top_idx
 loss = args.loss
 optimizer = args.optimizer
 
-
+# ---------- Train step ----------
 FOLDS = ["1", "2", "3", "4", "5"]
-
 for fold_idx in FOLDS: 
     
     print(f"\nStarting fold {fold_idx} training!")
     
-    instruction = f"python train.py \
+    train_instruction = f"python train.py \
         --model_name {model_name}\
         --fold_idx {fold_idx}\
         --task {task}\
@@ -83,7 +82,7 @@ for fold_idx in FOLDS:
         --loss {loss}\
         | tee {os.path.join(save_path, f'log_{fold_idx}.txt')}"
     
-    os.system(instruction)
+    # os.system(train_instruction)
     
     print(f"\nFold {fold_idx} training finished!")
     
@@ -98,6 +97,10 @@ for fold_idx in FOLDS:
     print("\nSleeping 3 min!")
     time.sleep(180)
     
+# Plot summary graphs
+plot_summary_graphs(save_path)
+
+# ---------- Global Validation step ----------
 # Store mean val results
 import json
 import pandas as pd
@@ -107,18 +110,13 @@ global_metrics = {}
 for fold_idx in FOLDS:
     fold_path = os.path.join(save_path, fold_idx)
     
-    with open(os.path.join(fold_path, "val", "validation_metrics.json"), 'r') as json_file:
+    with open(os.path.join(fold_path, "val", "fold_metrics.json"), 'r') as json_file:
         data = json.load(json_file)
-    
-    # Dict variables initialization to zero
-    if len(global_metrics.keys()) == 0:
-        for key in data.keys():
-            global_metrics[key] = 0
             
     for key, value in data.items():
-        global_metrics[key] += data[key]
+        current = global_metrics.get(key, 0)
+        global_metrics[key] = current + data[key]
         
-
 for key in global_metrics.keys():
     global_metrics[key] /= len(FOLDS)
     
@@ -127,6 +125,3 @@ with open(os.path.join(save_path, "avg_results.json"), "w") as results_file:
     
 results_df = pd.DataFrame(data=global_metrics, index=[0])
 results_df.to_excel(os.path.join(save_path, "avg_results.xlsx"), index=False, header=True)
-    
-# Plot summary graphs
-plot_summary_graphs(save_path)
