@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(description='Script for training a model')
 
 parser.add_argument('--model_name', type=str, default='xception', help='Name of the model (default: xception)', choices=['xception', 'mobilenet', 'densenet'])
 parser.add_argument('--fold_idx', type=str, required=True, help='Fold index')
-parser.add_argument('--task', type=str, required=True, help='Type of task', choices=['detection', 'classification'])
+parser.add_argument('--task', type=str, required=True, help='Type of task', choices=['detection', 'classification', 'abnormal_classification'])
 parser.add_argument('--save_path', type=str, required=True, help='Path to save the trained model')
 parser.add_argument('--trainable_core', type=bool, default=True, help='Whether to train the core of the model (only if pretrained=True) (default: True)')
 parser.add_argument('--pretrained', type=bool, default=True, help='Whether to use pretrained weights (ImageNet) (default: True)')
@@ -47,8 +47,6 @@ parser.add_argument('--augmentation_prob', type=float, default=0, help='Probabil
 parser.add_argument('--database', type=str, default="noncropped", help='Database to be used (default: "noncropped")', choices=["cropped", "noncropped"])
 parser.add_argument('--top_idx', type=int, default=1, help='Top index (see tops.py) (default=1)')
 parser.add_argument('--loss', type=str, default="categorical_crossentropy", help='Loss function to be used (default: categorical_crossentropy)', choices=["categorical_crossentropy", "categorical_focal_crossentropy"])
-
-
 
 args = parser.parse_args()
 
@@ -78,7 +76,6 @@ os.makedirs(save_path, exist_ok=True)
 with open(os.path.join(save_path, "train_args.json"), "w") as json_file: 
     json.dump(args.__dict__, json_file, indent=4)
 
-
 # Preprocessing
 preprocessing_func = get_preprocessing_func(name=model_name, pretrained=pretrained, task=task, database=database)
 
@@ -89,8 +86,14 @@ if task == "detection":
 elif task == "classification":
     df = pd.read_csv(CLASSIFICATION_CSV)
     n_classes = 7
+elif task == "abnormal_classification":
+    df = pd.read_csv(CLASSIFICATION_CSV)
+    df = df[df["classification"] != "normal"]
+    n_classes = 6
+    # task = "classification"    
+    
 else: 
-    raise ValueError(f"{task} not available! Try 'detection' or 'classification'.")
+    raise ValueError(f"{task} not available! Try 'detection', 'classification' or 'abnormal_classification'.")
 
 FOLDS = ["1", "2", "3", "4", "5"]
 # FOLDS = ["1", "2"]
@@ -107,7 +110,7 @@ train_dataset = get_dataset(
     fold_idx=fold_idx, 
     batch_size=batch_size,
     mode="train", # train or val/test, 
-    task=task, # detection or classification
+    task=task, # detection, classification or abnormal_classification
     repeat=True,
     preprocessing_func = preprocessing_func,
     augmentation=augmentation_prob
@@ -118,7 +121,7 @@ val_dataset = get_dataset(
     fold_idx=fold_idx, 
     batch_size=batch_size,
     mode="val", # train or val/test, 
-    task=task, # detection or classification
+    task=task, # detection, classification or abnormal_classification
     repeat=True,
     preprocessing_func = preprocessing_func,
     augmentation=0

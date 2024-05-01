@@ -126,6 +126,8 @@ def compute_loss_weights(task, df):
     # print(weights)
     
     from sklearn.utils.class_weight import compute_class_weight
+    if "classification" in task: 
+        task = "classification"
     encoded = df[task]
     weights = compute_class_weight(class_weight="balanced", y=encoded, classes=np.unique(encoded))
     
@@ -144,6 +146,10 @@ def compute_mu_sigma(fold_idx, database_path, task):
         df = pd.read_csv(DETECTION_CSV)
     elif task == "classification":
         df = pd.read_csv(CLASSIFICATION_CSV)
+    elif task == "abnormal_classification": 
+        df = pd.read_csv(CLASSIFICATION_CSV)
+        df = df[df["classification"] != "normal"]
+        task = "classification"
     else: 
         raise ValueError(f"Task not supported. Try 'detection' or 'classification'.")
     

@@ -23,6 +23,11 @@ def get_dataset(
     elif task == "classification":
         encoder = load_encoder(CLASSIFICATION_ENCODER)
         df = pd.read_csv(CLASSIFICATION_CSV)
+    elif task == "abnormal_classification":
+        encoder = load_encoder(ABNORMAL_CLASSIFICATION_ENCODER)
+        df = pd.read_csv(CLASSIFICATION_CSV)
+        df = df[df["classification"] != "normal"]
+        task = "classification"
     else: 
         raise ValueError(f"Task not supported. Try 'detection' or 'classification'.")
     
@@ -33,12 +38,15 @@ def get_dataset(
         df = df[df["split"].isin(FOLDS)]
         print("\nTraining folds: ", df.split.unique())
                 
-    elif (mode == "val") or (mode == "test"):
+    elif (mode == "val"):
         df = df[df["split"] == fold_idx]
         print("\nValidation fold: ", df.split.unique())
         
+    elif (mode == "test"):
+        df = df[df["split"] == "test"]
+        print("\nTesting on: ", df.split.unique())
     else:
-        raise ValueError(f"Invalid mode {mode}. Only available 'train' or 'test'.")
+        raise ValueError(f"Invalid mode {mode}. Only available 'train', 'val' or 'test'.")
     
     data = list(zip(df["new_filename"], df[task]))
     total_images = len(data)

@@ -17,6 +17,7 @@ BBOX_CSV = os.path.join(GIT_PATH, "XAI", "pulmonary_fibrosis_BB.csv")
 ENCODERS_PATH = os.path.join(GIT_PATH, "encoders")
 DETECTION_ENCODER = os.path.join(ENCODERS_PATH, "detection_encoder")
 CLASSIFICATION_ENCODER = os.path.join(ENCODERS_PATH, "classification_encoder")
+ABNORMAL_CLASSIFICATION_ENCODER = os.path.join(ENCODERS_PATH, "abnormal_classification_encoder") # removed normal, only diseases
 
 AUGMENTED_IMAGES_CHECK = os.path.join(TFM_PATH, "AUGMENTED_IMAGES")
 IMAGES_CHECK = os.path.join(TFM_PATH, "TEMP_IMAGES")
