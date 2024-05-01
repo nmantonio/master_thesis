@@ -38,7 +38,7 @@ for train_folder in train_list:
         print(f"Fold idx: {fold_idx}")
         # if os.path.exists(os.path.join(fold_path, "lime")):
         #     continue
-        os.makedirs(os.path.join(fold_path, "lime"), exist_ok=True)
+        os.makedirs(os.path.join(fold_path, "lime_mask"), exist_ok=True)
         
         model = load_model(os.path.join(fold_path, "model.keras"), compile=False)
         
@@ -86,14 +86,24 @@ for train_folder in train_list:
                 img = preprocess(img)
             img = np.squeeze(img)   
 
-            explanation = explainer.explain_instance(img, predict, top_labels=2, hide_color=0, num_samples=100)
+            explanation = explainer.explain_instance(
+                img, 
+                predict, 
+                random_seed=42, 
+                top_labels=2, 
+                hide_color=0, 
+                num_samples=1000, 
+                batch_size=32
+            )
 
-            temp, mask = explanation.get_image_and_mask(explanation.top_labels[0], positive_only=False, num_features=10, hide_rest=False)
+            temp, mask = explanation.get_image_and_mask(explanation.top_labels[0], positive_only=True, num_features=5, hide_rest=False, min_weight=0.)
             # ol_image, heatmap = show_imgwithheat(os.path.join(database, row["new_filename"]), heatmap)
             # ol_image = cv2.cvtColor(ol_image, cv2.COLOR_BGR2RGB)
             
             lime_image = cv2.cvtColor(mark_boundaries(temp / 2 + 0.5, mask)*255, cv2.COLOR_BGR2RGB)
             cv2.imwrite(os.path.join(fold_path, "lime", row["new_filename"]), lime_image)
+            cv2.imwrite(os.path.join(fold_path, "lime_mask", row["new_filename"]), mask*255)
+
             # print(ol_image.shape)
             # cv2.imwrite(os.path.join(IMAGES_CHECK, row["new_filename"]), heatmap)
 
