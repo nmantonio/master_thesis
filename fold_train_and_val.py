@@ -107,6 +107,7 @@ import pandas as pd
 
 FOLDS = ["1", "2", "3", "4", "5"]
 global_metrics = {}
+invalid_keys = []
 for fold_idx in FOLDS:
     fold_path = os.path.join(save_path, fold_idx)
     
@@ -114,9 +115,14 @@ for fold_idx in FOLDS:
         data = json.load(json_file)
             
     for key, value in data.items():
-        current = global_metrics.get(key, 0)
-        global_metrics[key] = current + data[key]
-        
+        if key not in invalid_keys:
+            if data[key] != "None":
+                current = global_metrics.get(key, 0)
+                global_metrics[key] = current + data[key]
+            else: 
+                global_metrics.pop(key)
+                invalid_keys.append(key)
+            
 for key in global_metrics.keys():
     global_metrics[key] /= len(FOLDS)
     
