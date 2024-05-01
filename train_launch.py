@@ -53,10 +53,29 @@ while True:
     import json
     with open(os.path.join(TRAIN_PATH, train_name, "avg_results.json"), "r") as json_file:
         train_results = json.load(json_file)
-    train_results["train_name"] = train_name
-    results_df = pd.read_excel(RESULTS_SHEET)
-    results_df = pd.concat([results_df, pd.DataFrame(data=train_results, index=[0])])
-    results_df.to_excel(RESULTS_SHEET, index=False, header=True)
+        
+    train_info = dict(row)
+    train_info.pop("patience", None)
+    train_info.pop("batch_size", None)
+    train_info.pop("done", None)
+    train_info.pop("optimizer", None)
+    train_info.pop("epochs", None)
+    train_info.pop("lr", None)
+    train_info.pop("train_name", None)
+    
+    train_info.update(train_results)
+    train_info["train_name"] = train_name
+    # train_results["train_name"] = train_name
+    if not os.path.exists(RESULTS_SHEET):
+    # If the Excel file doesn't exist, create it and write the DataFrame to it
+        results_df = pd.DataFrame(data=train_info, index=[0])
+        # results_df = results_df.T
+        results_df.to_excel(RESULTS_SHEET, index=False, header=True)
+    else:
+        # If the Excel file exists, load it and append the new row
+        results_df = pd.read_excel(RESULTS_SHEET)
+        results_df = pd.concat([results_df, pd.DataFrame(data=train_info, index=[0])])
+        results_df.to_excel(RESULTS_SHEET, index=False, header=True)
     del results_df
 
     df = pd.read_excel(TRAIN_SHEET, sheet_name="trains")
