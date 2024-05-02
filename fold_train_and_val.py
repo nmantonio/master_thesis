@@ -120,7 +120,7 @@ for fold_idx in FOLDS:
                 current = global_metrics.get(key, 0)
                 global_metrics[key] = current + data[key]
             else: 
-                global_metrics.pop(key)
+                global_metrics.pop(key, 0)
                 invalid_keys.append(key)
             
 for key in global_metrics.keys():
