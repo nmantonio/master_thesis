@@ -1,5 +1,6 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="0"
+import shutil
 
 import argparse
 
@@ -9,6 +10,8 @@ args = parser.parse_args()
 
 train_path = r"{}".format(args.train_path)
 save_path = os.path.join(train_path, "val")
+if os.path.exists(save_path):
+    shutil.rmtree(save_path)
 os.makedirs(save_path, exist_ok=True)
 
 from paths import *
@@ -121,6 +124,7 @@ disp.figure_.savefig(os.path.join(save_path, "confusion_matrix.png"))
 # Pycm 
 from pycm import ConfusionMatrix
 cm = ConfusionMatrix(val_df["true"].tolist(), val_df["pred"].tolist())
+cm.save_obj(os.path.join(save_path, "cm_obj"), save_stat = True)
 cm.save_html(os.path.join(save_path, "report"))
 
 class_metrics = {
@@ -155,6 +159,9 @@ fold_metrics = {
     "F2 Micro": fbeta_score(y_true=val_df["true"], y_pred=val_df["pred"], beta=2, average="micro"), 
     "F2 Macro": fbeta_score(y_true=val_df["true"], y_pred=val_df["pred"], beta=2, average="macro"),
 }
+if "normal" in cm.FP.keys():
+    fold_metrics["Normal False Positives"] = cm.FP["normal"]
+
 
 with open(os.path.join(save_path, "fold_metrics.json"), "w") as json_file: 
     json.dump(fold_metrics, json_file, indent=4)

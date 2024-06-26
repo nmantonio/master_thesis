@@ -9,6 +9,9 @@ DATABASE_PATH = os.path.join(TFM_PATH, "PROCESSED_DATABASE")
 CROPPED_DATABASE_PATH = os.path.join(TFM_PATH, "CROPPED_DATABASE")
 RAW_MASKS_PATH = os.path.join(TFM_PATH, "MASKS")
 MASKS_PATH = os.path.join(TFM_PATH, "PROCESSED_MASKS")
+MONTGOMERY_MASKS = os.path.join(TFM_PATH, "MontgomeryMasks")
+NONBONE_DATABASE_PATH = os.path.join(TFM_PATH, "NONBONEDATABASE")
+
 
 DETECTION_CSV = os.path.join(GIT_PATH, "abnormal_detection_selection.csv")
 CLASSIFICATION_CSV = os.path.join(GIT_PATH, "disease_classification_selection.csv")
